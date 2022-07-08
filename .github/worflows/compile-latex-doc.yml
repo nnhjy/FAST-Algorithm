@@ -17,3 +17,8 @@ jobs:
         with:
           working_directory: documentation/src
           root_file: FAST-Algorithm.tex
+
+      - name: Check pdf files
+        run: |
+          set -e
+          file documentation/src/FAST-Algorithm.pdf | grep -q ' PDF '

@@ -1,0 +1,76 @@
+{
+    "project": {
+        "version": 7,
+        "name": "FAST Algorithm",
+        "description": "",
+        "specifications": {},
+        "connections": [
+            {
+                "name": "from Input DB to MIP Model",
+                "from": [
+                    "Input DB",
+                    "right"
+                ],
+                "to": [
+                    "MIP Model",
+                    "left"
+                ]
+            },
+            {
+                "name": "from MIP Model to Output DB",
+                "from": [
+                    "MIP Model",
+                    "right"
+                ],
+                "to": [
+                    "Output DB",
+                    "left"
+                ]
+            }
+        ],
+        "jumps": []
+    },
+    "items": {
+        "Input DB": {
+            "type": "Data Store",
+            "description": "",
+            "x": -308.79365079365084,
+            "y": 9.023191094619667,
+            "url": {
+                "dialect": "sqlite",
+                "host": "",
+                "port": "",
+                "database": {
+                    "type": "path",
+                    "relative": true,
+                    "path": ".spinetoolbox/items/input_db/Input DB.sqlite"
+                }
+            }
+        },
+        "Output DB": {
+            "type": "Data Store",
+            "description": "",
+            "x": 188.48443619872194,
+            "y": 1.002576788291074,
+            "url": {
+                "dialect": "sqlite",
+                "host": "",
+                "port": "",
+                "database": {
+                    "type": "path",
+                    "relative": true,
+                    "path": ".spinetoolbox/items/output_db/Output DB.sqlite"
+                }
+            }
+        },
+        "MIP Model": {
+            "type": "Tool",
+            "description": "",
+            "x": -70.1803751803752,
+            "y": -2.005153576582148,
+            "specification": "",
+            "execute_in_work": true,
+            "cmd_line_args": []
+        }
+    }
+}

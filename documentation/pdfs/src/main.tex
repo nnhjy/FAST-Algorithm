@@ -1,0 +1,268 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage[shortlabels]{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{eurosym}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\renewcommand{\algorithmicrequire}{\textbf{Inputs:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\usepackage{svg}
+
+\usepackage{physics}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{mathdots}
+\usepackage{yhmath}
+\usepackage{cancel}
+\usepackage{color}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{tabularx}
+\usepackage{extarrows}
+\usepackage{booktabs}
+\usetikzlibrary{fadings}
+\usetikzlibrary{patterns}
+\usetikzlibrary{shadows.blur}
+\usetikzlibrary{shapes}
+
+\topmargin 0.1cm
+\oddsidemargin 0.3cm
+\evensidemargin 0.5cm
+\textwidth 15cm
+\textheight 22cm
+
+\title{FAST algorithm implementation}
+\author{Huang, Jiangyi}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{FAST algorithm}
+
+\subsection{Equivalent MIP formulation of FAST algorithm}
+FAST algorithm was first proposed in \cite{Aonghus2014_FAST}. It finds an optimal solution to the unit commitment and economic dispatch (UCED) of a single-node energy system, where no transmission is considered. The problem to be solved is equivalent to the following MIP. 
+
+\begin{table}[h]
+    \caption{\textcolor{blue}{Nomenclature of the original formulation}}
+    \label{tab:mip_nomenclature-1}
+    \centering
+    \begin{tabular}{ l l }
+        $\eta_{th}$  & Thermal efficiency (\%). \\
+        $C_{avg}$    & Average cost (\euro/MWh). \\
+        $C_{CO_2}$   & $CO_2$ costs (\euro/$t_{CO_2}$). \\
+        $C_{FL}$     & Full-load cost (\euro/h). \\
+        $C_{fuel}$   & Gross fuel costs (\euro/$MWh_{fuel}$). \\
+        $C_{incr}$   & Incremental cost (\euro/MWh). \\
+        $C_{NL}$     & No-load cost (\euro/h). \\
+        $C_{O\&M}$   & O\&M costs (\euro/MWh). \\
+        $C_{start}$  & Cost of starting unit type (\euro/start). \\
+        $f_{obj}$    & Annual costs (objective function). \\
+        $G$          & Hourly costs. \\
+        $I$          & Installed flexible generation (MW). \\
+        $N$          & Number of inflexible generators (\textit{integer}). \\
+        $P_{dem}$    & System electrical demand (MW). \\
+        $P_{max}$    & Maximum unit production (MW). \\
+        $P_{min}$       & Minimum unit production (MW). \\
+        $P_{res}$       & Minimum total reserve (MW). \\
+        $P_{wind}$      & Available wind production (MW). \\
+        $R_{CO_2/MWh}$  & Emissions Ratio ($t_{CO_2}$/$MWh_{fuel}$). \\
+        $R_{NL}$        & No load ratio. \\
+        $t \in T$       & Time-steps. \\
+        $u_{fl} \in U_{fl}$     & Flexible generation types (e.g. single-cycle gas and distillate oil plant). \\
+        $u_{in} \in U_{in}$     & Inflexible unit types (e.g. CCGT and steam-cycle Coal). \\
+        $u_{all} \in U_{all}$   & All generation types. \\
+        $V_{curt}$              & Decision variable: Wind curtailment (MW). \\
+        $V_{gen}$              & Decision variable: Electrical output (MW). \\
+        $V_{online}^b$              & Decision variable: Number online (\textit{binary}). \\
+        $V_{start}^b$              & Decision variable: Unit start (\textit{binary}). \\
+    \end{tabular}
+\end{table}
+
+\newpage
+
+\subsubsection*{Objective function}
+Objective is to minimise total operational costs over the modelling period.
+%
+\begin{align*}
+    f_{obj} = & \sum_{t \in T} G(t) \\
+    G(t) = & \sum_{u_{in} \in  U_{in}} 
+             \Big[ 
+             C_{start}(u_{in}) \cdot V_{start}^b(u_{in}, t) + C_{NL}(u_{in}) \cdot V_{online}^b(u_{in}, t) + C_{incr}(u_{in}) \cdot V_{gen}(u_{in}, t)  \Big] \nonumber \\
+             + & \sum_{u_{fl} \in  U_{fl}}
+             \Big[ 
+             C_{avg}(u_{fl}) \cdot V_{gen}(u_{fl}, t) 
+             \Big] \text{, } \forall t \in T
+\end{align*}
+%
+\subsubsection*{Constraints}
+The constraints the operation (UCED) of the modelled system.
+
+Total production of all units (less wind curtailment) must equal the electricity demand for each hour:
+
+\begin{align*}
+    \sum_{u_{all} \in U_{all}} V_{gen}(u_{all},t) + P_{wind}(t) - V_{curt}(t) = P_{dem}(t) \text{, } \forall t \in T.
+\end{align*}
+
+Wind curtailment must be less than or equal to wind production in each hour:
+
+\begin{align*}
+    V_{curt}(t) \leq P_{wind}(t) \text{, } \forall t \in T.
+\end{align*}
+
+The sum of online inflexible capacity less the sum of inflexible production (i.e. the quantity of spinning reserve) must exceed a pre-defined target:
+
+\begin{align*}
+    P_{res} \leq \sum_{u_{in} \in U_{in}} \Big[ V_{online}^b(u_{in},t) \cdot P_{max}(u_{in}) \Big] - \sum_{u_{in} \in U_{in}} \Big[ V_{gen}(u_{in},t) \Big] \text{, } \forall t \in T.
+\end{align*}
+For simplicity, here this target is set to the size of the largest installed unit, where at least one such unit exists.
+
+Production from any type cannot exceed the quantity installed. Similarly, the number of online inflexible units cannot exceed the number installed:
+
+\begin{align*}
+    \sum_{u_{all} \in U_{all}} V_{gen}(u_{all}, t) \leq I(u_{all}) \text{, } \forall t \in T \\
+    \sum_{u_{in} \in U_{in}} V_{online}^b(u_{in}, t) \leq N(u_{in}) \text{, } \forall t \in T.
+\end{align*}
+
+Production from any inflexible type is bounded by minimum and maximum output levels and the number of online units of that type:
+
+\begin{align*}
+    V_{gen}(u_{in},t) \geq V_{online}^b(u_{in},t) \cdot P_{min}(u_{in}) \text{, } \forall t \in T \text{, } u_{in} \in U_{in} \\
+    V_{gen}(u_{in},t) \leq V_{online}^b(u_{in},t) \cdot P_{max}(u_{in}) \text{, } \forall t \in T \text{, } u_{in} \in U_{in}.   
+\end{align*}
+
+Finally, the number of starts for an inflexible type is set to the increase in the number of online units for that type:
+
+\begin{align*}
+    V_{start}^b(u_{in},t) \geq V_{online}^b(u_{in},t) - V_{online}^b(u_{in},t-1 ) \text{, } \forall t \in T \text{, } \forall u_{in} \in U_{in}.
+\end{align*}
+
+In summary, the MIP is formulated as below: 
+{\small
+\begin{align}
+    & \min_{\{ V_{start}^b,V_{online}^b,V_{gen} \}} f_{obj} = \sum_{t \in T} G(t) \\
+    & G(t) = \sum_{u_{in} \in  U_{in}} 
+             \Big[ 
+             C_{start}(u_{in}) \cdot V_{start}^b(u_{in}, t) + C_{NL}(u_{in}) \cdot V_{online}^b(u_{in}, t) + C_{incr}(u_{in}) \cdot V_{gen}(u_{in}, t)  \Big] \nonumber \\
+             & + \sum_{u_{fl} \in  U_{fl}}
+             \Big[ 
+             C_{avg}(u_{fl}) \cdot V_{gen}(u_{fl}, t) 
+             \Big] \text{, } \forall t \in T \\
+    & \sum_{u_{all} \in U_{all}} V_{gen}(u_{all},t) + P_{wind}(t) - V_{curt}(t) = P_{dem}(t) \text{, } \forall t \in T \\
+    & V_{curt}(t) \leq P_{wind}(t) \text{, } \forall t \in T \\
+    & P_{res} \leq \sum_{u_{in} \in U_{in}} \Big[ V_{online}^b(u_{in},t) \cdot P_{max}(u_{in}) \Big] - \sum_{u_{in} \in U_{in}} \Big[ V_{gen}(u_{in},t) \Big] \text{, } \forall t \in T \\
+    & \sum_{u_{all} \in U_{all}} V_{gen}(u_{all}, t) \leq I(u_{all}) \text{, } \forall t \in T \\
+    & \sum_{u_{in} \in U_{in}} V_{online}^b(u_{in}, t) \leq N(u_{in}) \text{, } \forall t \in T \\
+    & V_{gen}(u_{in},t) \geq V_{online}^b(u_{in},t) \cdot P_{min}(u_{in}) \text{, } \forall t \in T \text{, } \forall u_{in} \in U_{in} \\
+    & V_{gen}(u_{in},t) \leq V_{online}^b(u_{in},t) \cdot P_{max}(u_{in}) \text{, } \forall t \in T \text{, } \forall u_{in} \in U_{in} \\
+    & V_{start}^b(u_{in},t) \geq V_{online}^b(u_{in},t) - V_{online}^b(u_{in},t-1 ) \text{, } \forall t \in T \text{, } \forall u_{in} \in U_{in}.
+\end{align}
+}
+
+\subsection{Revision of the formulation}
+
+\renewcommand{\arraystretch}{1.8}
+
+\subsubsection*{Sets and Indices}
+\begin{table}[h]
+    \label{tab:mip_sets}
+    \centering
+    \begin{tabular}{ l p{10cm} }
+        $u \in U^{fl}$  & Set of flexible generation units (e.g. single-cycle gas turbine and distillate oil plant). \\
+        $u \in U^{in}$  & Set of inflexible generation units (e.g. CCGT and steam-cycle coal generators). \\
+        $u \in U^{all}$  & Set of all dispatchable generation units consisting of the flexible and the inflexible, i.e. $U^{all} = U^{fl} \cup U^{in}$. \\
+        $v \in V$  & Set of variable renewable (VRE) generation units. \\
+        $t \in T$       & Set of time-steps. \\
+    \end{tabular}
+\end{table}
+\newpage
+
+\subsubsection*{Parameters}
+
+\begin{table}[h]
+    \label{tab:mip_parameters}
+    \centering
+    \begin{tabular}{ l p{10cm} }
+        $\eta_{u}^{th}$  & Thermal efficiency (\%) of dispatchable generation units at maximum production. \\
+        $C_{u:u \in U^{fl}}^{avg}$    & Average cost (\euro/MWh) of flexible units. \\
+        $C^{CO_2}$   & $CO_2$ costs (\euro/$t_{CO_2}$). \\
+        $C_{u:u \in U^{in}}^{FL}$     & Full-load cost (\euro/h) of inflexible units. \\
+        $C_{u:u \in U^{in}}^{fuel}$   & Gross fuel costs (\euro/$MWh_{fuel}$) of inflexible units. \\
+        $C_{u:u \in U^{in}}^{incr}$   & Incremental cost (\euro/MWh) of inflexible units. \\
+        $C_{u:u \in U^{in}}^{NL}$     & No-load cost (\euro/h) of inflexible units. \\
+        $C_{u}^{O\&M}$   & O\&M costs (\euro/MWh). \\
+        $C_{u:u \in U^{in}}^{start}$  & Cost of starting unit type (\euro/start) of inflexible units. \\
+        $C_t^{total}$ & Total system cost at individual time-step $t$. \\
+        $I_{U^{all}}$          & Installed dispatchable generation (MW). \\
+        $N_{U^{in}}$          & Number of installed inflexible generators (\textit{integer}). \\
+        $P_t^{dem}$    & System electrical demand (MW). \\
+        $P_{u:u \in U^{in}}^{max}$    & Maximum unit production (MW) of inflexible units. \\
+        $P_{u:u \in U^{in}}^{min}$       & Minimum unit production (MW) of inflexible units. \\
+        $P_t^{res}$       & Minimum total reserve (MW). \\
+        $P_{v,t}^{avail}$      & Available production (MW) of the variable renewables. \\
+        $R_{u}^{CO_2/MWh}$  & Emissions Ratio ($t_{CO_2}$/$MWh_{fuel}$). \\
+        $R_{u:u \in U^{in}}^{NL}$        & No load ratio of inflexible units. \\
+    \end{tabular}
+\end{table}
+
+\subsubsection*{Variables}
+
+\begin{table}[h]
+    \label{tab:mip_variables}
+    \centering
+    \begin{tabular}{ l p{10cm} }
+        $x_{v,t}^{curt}$              & Curtailment (MW) of VRE units. \\
+        $x_{u,t}^{gen}$              & Electrical output (MW) of dispatchable units. \\
+        $z_{u,t:u \in U^{in}}^{online} \in \{0,1\}$              & Online decision (\textit{binary}) of inflexible units. \\
+        $z_{u,t:u \in U^{in}}^{start} \in \{0,1\}$              & Start up decision (\textit{binary}) of inflexible units. \\
+    \end{tabular}
+\end{table}
+
+\subsubsection*{Formulation}
+
+{\small
+\begin{align}
+    & \textbf{Objective function: } \nonumber \\
+    & \min_{\{ z_{u,t:u \in U^{in}}^{start},z_{u,t:u \in U^{in}}^{online},x_{u,t}^{gen} \}} \sum_{t \in T} C_t^{total} \text{, } \\
+    & \textbf{where, }  \nonumber \\
+    & C_t^{total} = \sum_{u \in  U^{in}} 
+             \Big( C_{u}^{start} \cdot z_{u,t}^{start} + C_{u}^{NL} \cdot z_{u,t}^{online} + C_{u}^{incr} \cdot x_{u,t}^{gen} \Big) 
+             + \sum_{u \in  U^{fl}} C_{u}^{avg} \cdot x_{u,t}^{gen} \text{, } \forall t \in T \text{. } \nonumber \\
+    & \textbf{Constraints: } \nonumber \\
+    & \sum_{u \in U^{all}} x_{u,t}^{gen} + \sum_{v \in V} \Big( P_{v,t}^{avail} - x_{v,t}^{curt} \Big) = P_t^{dem} \text{, } \forall t \in T \\
+    & x_{v,t}^{curt} \leq P_{v,t}^{avail} \text{, } \forall v \in V \text{, } \forall t \in T \\
+    & \sum_{u \in U^{in}} \Big( z_{u,t}^{online} \cdot P_{u}^{max} \Big) - \sum_{u \in U^{in}} x_{u,t}^{gen} \geq P_t^{res} \text{, } \forall t \in T \\
+    & \sum_{u \in U^{all}} x_{u,t}^{gen} \leq I_{U^{all}} \text{, } \forall t \in T \\
+    & \sum_{u \in U^{in}} z_{u,t}^{online} \leq N_{U^{in}} \text{, } \forall t \in T \\
+    & x_{u,t}^{gen} \geq z_{u,t}^{online} \cdot P_{u}^{min} \text{, } \forall u \in U^{in} \text{, } \forall t \in T  \\
+    & x_{u,t}^{gen} \leq z_{u,t}^{online} \cdot P_{u}^{max} \text{, } \forall u \in U^{in} \text{, } \forall t \in T  \\
+    & z_{u,t}^{start} \geq z_{u,t}^{online} -z_{u,t-1}^{online} \text{, } \forall u \in U^{in} \text{, } \forall t \in T.
+\end{align}
+}
+
+And the incremental cost of inflexible generation units is estimated by:
+{\small
+\begin{align}
+    & C_{u}^{incr} = \frac{C_{u}^{FL} \cdot (1 - R_{u}^{NL})}{P_{u}^{max}} \text{, } \\
+    & \text{where, } \nonumber \\
+    & C_{u}^{FL} = \frac{P_{u}^{max}}{\eta_{u}^{th}} \cdot (C_{u}^{fuel} + C_{u}^{O\&M} + C^{CO_2} \cdot R_{u}^{CO_2/MWh} ) \text{, } \forall u \in U^{in}.
+\end{align}
+}
+
+\newpage
+\bibliographystyle{plain}
+\bibliography{refs.bib}
+
+\end{document}

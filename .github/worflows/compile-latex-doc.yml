@@ -15,10 +15,10 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v2
         with:
-          working_directory: documentation/src
+          working_directory: documentation
           root_file: FAST-Algorithm.tex
 
       - name: Check pdf files
         run: |
           set -e
-          file documentation/src/FAST-Algorithm.pdf | grep -q ' PDF '
+          file src/FAST-Algorithm.pdf | grep -q ' PDF '

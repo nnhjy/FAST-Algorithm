@@ -18,9 +18,9 @@ jobs:
           root_file: FAST-Algorithm.tex
           working_directory: documentation/src
           
-      - name: Check pdf files
-        run:
-          file $GITHUB_WORKSPACE/documentation/src/FAST-Algorithm.pdf | grep -q ' PDF '
+#       - name: Check pdf files
+#         run:
+#           file $GITHUB_WORKSPACE/documentation/src/FAST-Algorithm.pdf | grep -q ' PDF '
           
       - name: Upload FAST-Algorithm.pdf
         run: |          
@@ -37,5 +37,5 @@ jobs:
           git commit -m "[GA] update FAST-Algorithm.pdf"
           git push
           
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+#         env:
+#           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}

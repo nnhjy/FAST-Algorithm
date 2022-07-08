@@ -1,0 +1,38 @@
+name: Build LaTeX document
+
+on: 
+  push:
+    branches: 
+      - main    
+
+jobs:
+  build_latex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v2
+     
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v2
+        with:
+          root_file: FAST-Algorithm.tex
+          working_directory: documentation/src
+          
+      - name: Check pdf files
+        run:
+          file FAST-Algorithm.pdf | grep -q ' PDF '
+          
+      - name: Upload FAST-Algorithm.pdf
+        run: |          
+          # configure git
+          git config --global user.name "nnhjy"
+          git config --global user.email "jiangyi.huang@outlook.com"
+          
+          # add file and push
+          git checkout main
+          git add -f FAST-Algorithm.pdf
+          git commit -m "[GA] update FAST-Algorithm.pdf"
+          git push
+          
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}

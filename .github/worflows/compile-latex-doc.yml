@@ -1,9 +1,7 @@
 name: Build LaTeX document
 
 on: 
-  push:
-    branches: 
-      - main    
+  [push]
 
 jobs:
   build_latex:
@@ -17,20 +15,9 @@ jobs:
         with:
           root_file: FAST-Algorithm.tex
 
-      - name: Upload FAST-Algorithm.pdf
-        run: |
-          # Move file to root folder
-          mv $GITHUB_WORKSPACE/FAST-Algorithm.pdf $GITHUB_WORKSPACE/documentation/FAST-Algorithm.pdf
-          
-          # configure git
-          git config --global user.name "nnhjy"
-          git config --global user.email "jiangyi.huang@outlook.com"
-          
-          # add file and push
-          git checkout main
-          git add -f documentation/FAST-Algorithm.pdf
-          git commit -m "[GA] update FAST-Algorithm.pdf"
-          git push
-          
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      - name: Upload pdfs  
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: |
+            FAST-Algorithm.pdf

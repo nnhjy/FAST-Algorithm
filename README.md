@@ -1,3 +1,5 @@
+[![Build LaTeX document](https://github.com/nnhjy/FAST-Algorithm/blob/main/.github/workflows/compile-Latex.yml/badge.svg?branch=main)](https://github.com/nnhjy/FAST-Algorithm/blob/main/.github/workflows/compile-Latex.yml)
+
 # FAST-Algorithm
 
 This repository implements the FAST algorithm [(Aonghus Shortt and Mark O'Malley, 2014)](https://github.com/nnhjy/FAST-Algorithm/blob/main/documentation/2014-UCED-heuristic-algorithm-FAST.pdf) with Julia programming language. 

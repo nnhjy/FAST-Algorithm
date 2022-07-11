@@ -1,4 +1,4 @@
-[![Build LaTeX document](https://github.com/nnhjy/FAST-Algorithm/blob/main/.github/workflows/compile-Latex.yml/badge.svg?branch=main)](https://github.com/nnhjy/FAST-Algorithm/blob/main/.github/workflows/compile-Latex.yml)
+[![Build LaTeX document](https://github.com/nnhjy/FAST-Algorithm/actions/workflows/compile-Latex.yml/badge.svg?branch=main)](https://github.com/nnhjy/FAST-Algorithm/actions/workflows/compile-Latex.yml)
 
 # FAST-Algorithm
 

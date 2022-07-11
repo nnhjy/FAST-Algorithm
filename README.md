@@ -1,4 +1,5 @@
 [![Build LaTeX document](https://github.com/nnhjy/FAST-Algorithm/actions/workflows/compile-Latex.yml/badge.svg?branch=main)](https://github.com/nnhjy/FAST-Algorithm/actions/workflows/compile-Latex.yml)
+[![License: GPL-3.0](https://img.shields.io/github/license/nnhjy/FAST-Algorithm)](https://github.com/nnhjy/FAST-Algorithm/blob/main/LICENSE)
 
 # FAST-Algorithm
 

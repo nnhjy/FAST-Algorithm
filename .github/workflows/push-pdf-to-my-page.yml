@@ -1,0 +1,22 @@
+name: Push File
+
+on: push
+
+jobs:
+  copy-file:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Pushes FAST-Algorithm.pdf
+      uses: dmnemec/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: '$GITHUB_WORKSPACE/documentation/FAST-Algorithm.pdf'
+        destination_repo: 'https://github.com/nnhjy/nnhjy.github.io'
+        destination_folder: 'assets/pdfs'
+        user_email: 'jiangyi.huang@outlook.com'
+        user_name: 'nnhjy'
+        commit_message: '[GA] push FAST-Algorithm.pdf to my page'

@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'FAST-Algorithm.pdf'
+      - 'documentation/FAST-Algorithm.pdf'
 
 jobs:
   copy-file:
@@ -19,7 +19,7 @@ jobs:
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        source_file: 'FAST-Algorithm.pdf'
+        source_file: 'documentation/FAST-Algorithm.pdf'
         destination_repo: 'nnhjy/nnhjy.github.io'
         destination_folder: 'assets/pdfs'
         user_email: 'jiangyi.huang@outlook.com'

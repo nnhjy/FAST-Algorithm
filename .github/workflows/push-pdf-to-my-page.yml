@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'documentation/FAST-Algorithm.pdf'
+#     paths:
+#       - 'documentation/FAST-Algorithm.pdf'
 
 jobs:
   copy-file:

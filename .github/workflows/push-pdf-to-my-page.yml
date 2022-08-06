@@ -15,7 +15,7 @@ jobs:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: '$GITHUB_WORKSPACE/documentation/FAST-Algorithm.pdf'
-        destination_repo: 'https://github.com/nnhjy/nnhjy.github.io'
+        destination_repo: 'nnhjy/nnhjy.github.io'
         destination_folder: 'assets/pdfs'
         user_email: 'jiangyi.huang@outlook.com'
         user_name: 'nnhjy'

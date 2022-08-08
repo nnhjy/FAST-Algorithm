@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'documentation/FAST-Algorithm.pdf'
+      - documentation/src/FAST-Algorithm.tex
 
 jobs:
   copy-file:

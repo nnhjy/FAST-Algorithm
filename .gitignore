@@ -27,7 +27,7 @@ Manifest.toml
 logs/
 *.log
 output/
-*.bak
+*.bak*
 .spinetoolbox/items/
 .spinetoolbox/local/
 # items/
